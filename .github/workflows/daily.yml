@@ -1,0 +1,49 @@
+
+name: Daily Activity
+
+on:
+  schedule:
+    - cron: "17 12 * * *"
+      timezone: "Europe/Helsinki"
+
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: daily-activity
+  cancel-in-progress: false
+
+jobs:
+  activity:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Generate commits
+        env:
+          GIT_NAME: K35177
+          GIT_EMAIL: k35177@proton.me
+          TZ: Europe/Helsinki
+        run: |
+          git config user.name "$GIT_NAME"
+          git config user.email "$GIT_EMAIL"
+
+          TODAY=$(date +%F)
+
+          # 1 to 7 commits per day
+          COUNT=$((1 + RANDOM % 7))
+
+          echo "Generating $COUNT commits"
+
+          for i in $(seq 1 "$COUNT"); do
+            echo "$TODAY | $i | $RANDOM" >> activity.log
+
+            git add activity.log
+            git commit -m "chore: daily activity $TODAY ($i)"
+          done
+
+          git push
